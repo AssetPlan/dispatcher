@@ -1,10 +1,6 @@
-# Very short description of the package
+# Assetplan Dispatcher
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/assetplan/dispatcher.svg?style=flat-square)](https://packagist.org/packages/assetplan/dispatcher)
-[![Total Downloads](https://img.shields.io/packagist/dt/assetplan/dispatcher.svg?style=flat-square)](https://packagist.org/packages/assetplan/dispatcher)
-![GitHub Actions](https://github.com/assetplan/dispatcher/actions/workflows/main.yml/badge.svg)
-
-This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what PSRs you support to avoid any confusion with users and contributors.
+Assetplan Dispatcher is a lightweight PHP package that allows you to dispatch jobs between multiple applications using HTTP requests. This can be useful in distributed systems where jobs need to be executed on remote machines.
 
 ## Installation
 
@@ -16,27 +12,39 @@ composer require assetplan/dispatcher
 
 ## Usage
 
-```php
-// Usage description here
-```
-
-### Testing
+### Setting up the backend
+Before you can start dispatching jobs, you need to set up a backend application that will receive the dispatched jobs. This can be any PHP application that can handle HTTP requests. You'll need to set the following environment variables to configure the backend:
 
 ```bash
-composer test
+# in the backend
+DISPATCHER_BACKEND_SECRET=your-secret
+DISPATCHER_IS_BACKEND=true
 ```
 
-### Changelog
+```bash
+# in the machine that will dispatch the jobs
+DISPATCHER_BACKEND_URL=http://localhost:8000
+DISPATCHER_BACKEND_SECRET=your-secret
+```
 
-Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
+The `DISPATCHER_BACKEND_URL` variable should point to the URL of the backend application. The `DISPATCHER_BACKEND_SECRET` variable is a shared secret that is used to sign the dispatched jobs. Make sure to keep this secret secure.
 
-## Contributing
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+### Dispatching a job
+To dispatch a job from your application, use the dispatch method of the Dispatcher class. The method takes two parameters:
 
-### Security
+- `$job`: The fully qualified name of the job class to be dispatched.
+- `$payload`: An array of data to be passed to the job.
 
-If you discover any security related issues, please email cristian.fuentes@assetplan.cl instead of using the issue tracker.
+Here's an example:
+```php
+<?php
+
+use Assetplan\Dispatcher\DispatcherFacade;
+
+$result = DispatcherFacade::dispatch(MyJob::class, ['foo' => 'bar']);
+```
+The `dispatch` method will return the result of the dispatched job. You can use this result to track the status of the job or to perform further processing.
 
 ## Credits
 
