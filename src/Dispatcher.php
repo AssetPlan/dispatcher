@@ -30,9 +30,8 @@ class Dispatcher
         ])->json();
     }
 
-    public function receive(string $job, array $payload = [], string $queue = 'default', $signature = ''): mixed
+    public function receive(string $job, array $payload = [], string $queue = 'default'): mixed
     {
-
         $job = app()->make($job, $payload);
         return $this->queue->pushOn($queue, $job);
     }
