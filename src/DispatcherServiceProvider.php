@@ -18,6 +18,11 @@ class DispatcherServiceProvider extends ServiceProvider
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'dispatcher');
         // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         // $this->loadRoutesFrom(__DIR__.'/routes.php');
+        //
+        if (config('dispatcher.is_backend')) {
+            $this->loadRoutesFrom(__DIR__.'/routes.php');
+        }
+
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -53,8 +58,6 @@ class DispatcherServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'dispatcher');
 
         // Register the main class to use with the facade
-        $this->app->singleton('dispatcher', function () {
-            return new Dispatcher;
-        });
+        $this->app->singleton('dispatcher', Dispatcher::class);
     }
 }
