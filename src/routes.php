@@ -4,11 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Assetplan\Dispatcher\DispatcherFacade;
 use Illuminate\Http\Request;
 
-Route::prefix('dispatcher')->group(function () {
+Route::prefix('dispatcher')->middleware(['dispatcher-middleware'])->group(function () {
     Route::post('dispatch', function (Request $request) {
-        if (!$request->wantsJson()) {
-            abort(400, 'Only JSON requests are accepted');
-        }
 
         $request->validate([
             'job' => ['required', function ($input, $value, $fails) {

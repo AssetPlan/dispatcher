@@ -32,9 +32,6 @@ class Dispatcher
 
     public function receive(string $job, array $payload = [], string $queue = 'default', $signature = ''): mixed
     {
-        if (!$this->verify($job, $payload, $signature)) {
-            abort(403, 'Invalid signature');
-        }
 
         $job = app()->make($job, $payload);
         return $this->queue->pushOn($queue, $job);
