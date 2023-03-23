@@ -32,6 +32,6 @@ Route::prefix('dispatcher')->middleware(['dispatcher-middleware'])->group(functi
             $queue = $request->input('queue');
         }
 
-        return DispatcherFacade::receive($request->job, $request->payload, $queue);
+        return response()->json(['jobId' => DispatcherFacade::receive($request->job, $request->payload, $queue)]);
     })->name('dispatcher.dispatch');
 });

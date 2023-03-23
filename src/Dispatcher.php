@@ -20,14 +20,19 @@ class Dispatcher
     }
 
 
-    public function dispatch(string $job, array $payload = []): array
+    public function dispatch(string $job, array $payload = [], $queue = 'default'): array
     {
         $signature = $this->sign($job, $payload);
-        return $this->http->post(config('dispatcher.url') . '/dispatch', [
-            'job' => $job,
-            'payload' => $payload,
-            'signature' => $signature
-        ])->json();
+        $response = $this->http
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(config('dispatcher.url') . '/dispatch', [
+                'job' => $job,
+                'payload' => $payload,
+                'signature' => $signature,
+                'queue' => $queue ?? 'default',
+            ]);
+
+        return $response->json();
     }
 
     public function receive(string $job, array $payload = [], string $queue = 'default'): mixed
