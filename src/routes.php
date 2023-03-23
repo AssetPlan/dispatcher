@@ -1,11 +1,12 @@
 <?php
 
+use Assetplan\Dispatcher\Dispatcher;
 use Illuminate\Support\Facades\Route;
 use Assetplan\Dispatcher\DispatcherFacade;
 use Illuminate\Http\Request;
 
 Route::prefix('dispatcher')->middleware(['dispatcher-middleware'])->group(function () {
-    Route::post('dispatch', function (Request $request) {
+    Route::post('dispatch', function (Request $request, Dispatcher $dispatcher) {
 
         $request->validate([
             'job' => ['required', function ($input, $value, $fails) {
@@ -32,6 +33,6 @@ Route::prefix('dispatcher')->middleware(['dispatcher-middleware'])->group(functi
             $queue = $request->input('queue');
         }
 
-        return response()->json(['jobId' => DispatcherFacade::receive($request->job, $request->payload, $queue)]);
+        return response()->json(['jobId' => $dispatcher->receive($request->job, $request->payload, $queue)]);
     })->name('dispatcher.dispatch');
 });
