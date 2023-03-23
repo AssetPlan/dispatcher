@@ -33,6 +33,8 @@ class DispatcherServiceProvider extends ServiceProvider
 
         $this->app->singleton('dispatcher', Dispatcher::class);
 
-        $this->app['router']->aliasMiddleware('dispatcher-middleware', DispatcherMiddleware::class);
+        if (config('dispatcher.is_backend')) {
+            $this->app['router']->aliasMiddleware('dispatcher-middleware', DispatcherMiddleware::class);
+        }
     }
 }
