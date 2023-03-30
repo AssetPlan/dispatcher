@@ -40,11 +40,20 @@ Here's an example:
 ```php
 <?php
 
-use Assetplan\Dispatcher\DispatcherFacade;
+use Assetplan\Dispatcher\Dispatcher;
+use Illuminate\Http\Request;
 
-$result = DispatcherFacade::dispatch(MyJob::class, ['foo' => 'bar']);
+class ExampleController
+{
+    public function store(Request $request, Dispatcher $dispatcher)
+    {
+        $result = $dispatcher->dispatch(MyJob::class, ['foo' => 'bar']);
+    }
+}
 ```
 The `dispatch` method will return the result of the dispatched job. You can use this result to track the status of the job or to perform further processing.
+
+
 
 ## Credits
 
