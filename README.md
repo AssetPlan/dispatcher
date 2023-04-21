@@ -52,7 +52,7 @@ class ExampleController
             // do something if failed dispatch
         }
 
-        return $result->jobId(); // the result object allows access to the dispatched job id
+        return $result->getJobId(); // the result object allows access to the dispatched job id
     }
 }
 ```
