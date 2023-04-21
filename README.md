@@ -48,6 +48,11 @@ class ExampleController
     public function store(Request $request, Dispatcher $dispatcher)
     {
         $result = $dispatcher->dispatch(MyJob::class, ['foo' => 'bar']);
+        if ($result->failed()) {
+            // do something if failed dispatch
+        }
+
+        return $result->jobId(); // the result object allows access to the dispatched job id
     }
 }
 ```
