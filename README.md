@@ -57,7 +57,8 @@ The `dispatch` method will return the result of the dispatched job. You can use 
 
 ## Credits
 
--   [Cristian Fuentes](https://github.com/assetplan)
+-   [Assetplan](https://github.com/assetplan)
+-   [Cristian Fuentes](https://github.com/cfuentessalgado)
 -   [All Contributors](../../contributors)
 
 ## License
