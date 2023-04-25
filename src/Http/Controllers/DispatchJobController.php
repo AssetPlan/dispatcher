@@ -23,6 +23,6 @@ class DispatchJobController
             $queue = $request->input('queue');
         }
 
-        return response()->json(['jobId' => $dispatcher->receive($request->job, $request->payload, $queue)]);
+        return response()->json(['id' => $dispatcher->receive($request->job, $request->payload, $queue)]);
     }
 }

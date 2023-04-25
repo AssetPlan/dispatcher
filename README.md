@@ -85,11 +85,54 @@ class ExampleController
             // do something if failed dispatch
         }
 
-        return $result->getJobId(); // the result object allows access to the dispatched job id
+        return $result->getId(); // the result object allows access to the dispatched job id
     }
 }
 ```
 The `dispatch` method will return the result of the dispatched job. You can use this result to track the status of the job or to perform further processing.
+
+### Dispatching a batch of jobs
+
+To dispatch a batch of jobs, use the `batch` method of the `Dispatcher` class. The method takes three parameters:
+
+- `$jobs`: an array of `Assetplan\Dispatcher\Queue\Job` objects: each with the name of the target job and it's payload
+- `$queue`: the queue to which the jobs should be dispatched
+- `$shouldBatch`: whether the batch should be dispatched as a Laravel Queue Batch or simply dispatch all the jobs separately
+
+Here's an example:
+```php
+<?php
+
+use Assetplan\Dispatcher\Dispatcher;
+use App\Jobs\SendWelcomeEmail;
+use Illuminate\Http\Request;
+
+class ExampleController
+{
+    public function store(Request $request, Dispatcher $dispatcher)
+    {
+        $jobs = [
+            new Job(
+                SendWelcomeEmail::class,
+                ['email'=>'user@example.com']
+            ),
+            new Job(
+                'App\Jobs\InviteToUserGroup',
+                ['email'=>'user@example.com']
+            ),
+        ];
+        $result = $dispatcher->batch($jobs, 'emails', shouldBatch: true);
+        if ($result->failed()) {
+            // do something if failed dispatch
+        }
+
+        return $result->getId(); // the result object allows access to the dispatched batch id
+    }
+}
+
+```
+
+**Note:** When dispatching with `shouldBatch=false` the batch id will be generated as the local batch UUID.
 
 
 

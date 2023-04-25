@@ -42,10 +42,10 @@ class Dispatcher
 
         $response = $response->json();
 
-        return new Result($response['jobId'], $response);
+        return new Result($response['id'], $response);
     }
 
-    public function batch(array $jobs, string $queue = 'default', bool $shouldBatch = true)
+    public function batch(array $jobs, string $queue = 'default', bool $shouldBatch = true) : Result
     {
         $jobs = collect($jobs)->filter(fn ($job) => $job instanceof Job);
 
@@ -72,7 +72,13 @@ class Dispatcher
             ->withHeaders(['Accept' => 'application/json'])
             ->post(config('dispatcher.url') . '/dispatch/batch', $fields);
 
-        return $response->json();
+        if ($response->failed()) {
+            return new Result(0, $response->json());
+        }
+
+        $response = $response->json();
+
+        return new Result($response['id'], $response);
     }
 
     public function receive(string $job, array $payload = [], string $queue = 'default'): mixed
@@ -90,13 +96,13 @@ class Dispatcher
             $jobs[] = app()->make($job->name, $job->payload);
         }
         if ($shouldBatch) {
-            return Bus::batch($jobs)->onQueue($queue)->dispatch();
+            return Bus::batch($jobs)->onQueue($queue)->dispatch()->jsonSerialize();
         }
 
         $results = [];
 
         foreach ($jobs as $job) {
-            $results[] = ['jobId' => $this->queue->pushOn($queue, $job)];
+            $results[] = ['id' => $this->queue->pushOn($queue, $job)];
         }
 
         return $results;

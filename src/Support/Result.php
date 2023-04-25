@@ -4,17 +4,17 @@ namespace Assetplan\Dispatcher\Support;
 
 final class Result
 {
-    protected int $jobId;
+    protected string $id;
     protected array $response;
-    protected bool $ok;
+    protected bool $ok = true;
 
-    public function __construct(int $jobId, array $response)
+    public function __construct($id, array $response)
     {
-        if ($jobId == 0) {
+        if ($id == 0) {
             $this->ok = false;
         }
 
-        $this->jobId = $jobId;
+        $this->id = $id;
         $this->response = $response;
     }
 
@@ -28,9 +28,9 @@ final class Result
         return ! $this->ok;
     }
 
-    public function getJobId()
+    public function getId()
     {
-        return $this->jobId;
+        return $this->id;
     }
 
     public function getResponseArray()
