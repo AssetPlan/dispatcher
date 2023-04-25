@@ -21,6 +21,9 @@ class DispatcherServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__ . '/../config/config.php' => config_path('dispatcher.php'),
             ], 'config');
+            $this->commands([
+                Commands\GenerateSecretCommand::class,
+            ]);
         }
     }
 
