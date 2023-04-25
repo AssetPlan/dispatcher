@@ -22,7 +22,7 @@ class IsIlluminateJob implements ValidationRule
             $fail('Job class does not have a handle method');
         }
 
-        if (!is_subclass_of($value, Illuminate\Contracts\Queue\ShouldQueue::class)) {
+        if (!is_subclass_of($value, 'Illuminate\Contracts\Queue\ShouldQueue')) {
             $fail('Job class does not implement Illuminate\Contracts\Queue\ShouldQueue');
         }
     }
