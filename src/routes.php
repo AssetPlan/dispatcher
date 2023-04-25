@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Bus;
 
 Route::prefix('dispatcher')->middleware(['dispatcher-middleware'])->group(function () {
-    Route::post('dispatch/batch', function (Request $request) {
+    Route::post('dispatch/batch', function (Request $request, Dispatcher $dispatcher) {
 
         $request->validate([
             'batch' => 'required|array',
@@ -24,21 +24,7 @@ Route::prefix('dispatcher')->middleware(['dispatcher-middleware'])->group(functi
             $queue = $request->input('queue');
         }
 
-        $jobs = [];
-        foreach ($request->batch as $job) {
-            $job = Job::fromJson($job);
-            $jobs[] = app()->make($job->name, $job->payload);
-        }
-
-        if ($request->payload['shouldBatch']) {
-            return Bus::batch($jobs)->onQueue($queue)->dispatch();
-        }
-
-        $results = [];
-        foreach ($jobs as $job) {
-
-            $results[] = ['jobId' => dispatch($job)->onQueue($queue)];;
-        }
+        $results = $dispatcher->receiveBatch($request->batch, $queue, $request->payload['shouldBatch']);
 
         return response()->json($results);
     })->name('dispatcher.dispatch.batch');

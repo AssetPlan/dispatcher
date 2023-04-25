@@ -7,6 +7,7 @@ use Assetplan\Dispatcher\Support\Result;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Queue\Queue;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
 
 class Dispatcher
@@ -46,7 +47,7 @@ class Dispatcher
 
     public function batch(array $jobs, string $queue = 'default', bool $shouldBatch = true)
     {
-        // $jobs = collect($jobs)->filter(fn ($job) => $job instanceof Job);
+        $jobs = collect($jobs)->filter(fn ($job) => $job instanceof Job);
 
         $batchId = Str::uuid();
 
@@ -78,6 +79,27 @@ class Dispatcher
     {
         $job = app()->make($job, $payload);
         return $this->queue->pushOn($queue, $job);
+    }
+
+    public function receiveBatch(array $batch, string $queue = 'default', bool $shouldBatch = true) : array
+    {
+        $jobs = [];
+
+        foreach ($batch as $job) {
+            $job = Job::fromJson($job);
+            $jobs[] = app()->make($job->name, $job->payload);
+        }
+        if ($shouldBatch) {
+            return Bus::batch($jobs)->onQueue($queue)->dispatch();
+        }
+
+        $results = [];
+
+        foreach ($jobs as $job) {
+            $results[] = ['jobId' => $this->queue->pushOn($queue, $job)];
+        }
+
+        return $results;
     }
 
     public function verify(string $job, array $payload = [], string $signature = '')
