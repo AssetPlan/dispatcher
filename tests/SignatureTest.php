@@ -39,7 +39,8 @@ class SignatureTest extends TestCase
         $this->assertFalse($verified);
     }
 
-    public function testSignatureWithDifferentSignature(){
+    public function testSignatureWithDifferentSignature()
+    {
         $payload = [
             'foo' => 'bar',
             'baz' => 'qux'
@@ -51,7 +52,6 @@ class SignatureTest extends TestCase
         $verified = $dispatcher->verify('test', $payload, $signature);
 
         $this->assertFalse($verified);
-
     }
 
 }
