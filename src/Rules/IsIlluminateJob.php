@@ -14,6 +14,10 @@ class IsIlluminateJob implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        if (config('dispatcher.aliases.'.$value)){
+            $value = config('dispatcher.aliases.'.$value);
+        }
+
         if (!class_exists($value)) {
             $fail('Job class does not exist');
         }

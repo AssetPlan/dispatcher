@@ -62,6 +62,40 @@ If the `.env` file already contains a `DISPATCHER_BACKEND_SECRET` variable, the 
 
 **Note:** If you are running the command in a production environment, the command will display a warning message and exit without generating a new secret key. This is to prevent accidental changes to production settings.
 
+### Configuration
+
+The package comes with a configuration file that allows you to customize its behavior. You can publish the configuration file by running the following command:
+```bash
+php artisan vendor:publish --provider="Assetplan\Dispatcher\DispatcherServiceProvider" --tag="config"
+```
+
+Once you have published the configuration file, you can customize the following options:
+
+- `url`: The URL of the backend server where the jobs will be dispatched.
+- `secret`: The secret key that will be used to sign the jobs before dispatching them.
+- `is_backend`: Whether the current server is the backend server or not.
+- `aliases`: You can register aliases to make it easier to dispatch your jobs. These aliases only need to be registered in the backend server and are optional.
+
+### Aliases
+
+The `aliases` configuration option allows you to register custom aliases for job classes. This can be useful to avoid typing the fully qualified class name of a job every time you dispatch it.
+
+Here's an example of how to register an alias in the dispatcher.php config file:
+```php
+<?php
+'aliases' => [
+    'send-welcome-email' => 'App\Jobs\SendWelcomeEmail',
+],
+```
+
+You can then use the alias when dispatching the job:
+
+```php
+<?php
+    $dispatcher->dispatch('send-welcome-email', ['user' => $user]);
+```
+
+**Note:** Registering aliases is entirely optional and it only needs to be done in the backend server.
 
 ### Dispatching a job
 To dispatch a job from your application, use the dispatch method of the Dispatcher class. The method takes two parameters:
