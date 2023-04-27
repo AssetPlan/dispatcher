@@ -83,7 +83,7 @@ class Dispatcher
 
     public function receive(string $job, array $payload = [], string $queue = 'default'): mixed
     {
-        $job = app()->make($job, $payload);
+        $job = $this->makeJob($job, $payload);
         return $this->queue->pushOn($queue, $job);
     }
 
@@ -93,7 +93,7 @@ class Dispatcher
 
         foreach ($batch as $job) {
             $job = Job::fromJson($job);
-            $jobs[] = app()->make($job->name, $job->payload);
+            $jobs[] = $this->makeJob($job->name, $job->payload);
         }
         if ($shouldBatch) {
             return Bus::batch($jobs)->onQueue($queue)->dispatch()->jsonSerialize();
@@ -106,6 +106,15 @@ class Dispatcher
         }
 
         return $results;
+    }
+
+    protected function makeJob(string $job, array $payload = [])
+    {
+        if (config('dispatcher.aliases.'.$job)){
+            $job = config('dispatcher.aliases.'.$job);
+        }
+
+        return app()->make($job, $payload);
     }
 
     public function verify(string $job, array $payload = [], string $signature = '')
