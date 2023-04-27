@@ -3,15 +3,13 @@
 namespace Assetplan\Dispatcher\Tests;
 
 use Assetplan\Dispatcher\Dispatcher;
+use Assetplan\Dispatcher\Support\Result;
 use Assetplan\Dispatcher\Tests\Mocks\HttpMock;
-use Assetplan\Dispatcher\Tests\TestCase;
 use Illuminate\Contracts\Queue\Queue;
 use Illuminate\Hashing\BcryptHasher;
-use Assetplan\Dispatcher\Support\Result;
 
 class ResultTest extends TestCase
 {
-
     public function testDispatchShouldReturnResult()
     {
         $http = new HttpMock();

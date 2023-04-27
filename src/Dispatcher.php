@@ -13,7 +13,9 @@ use Illuminate\Support\Str;
 class Dispatcher
 {
     protected Hasher $hasher;
+
     protected PendingRequest $http;
+
     protected Queue $queue;
 
     public function __construct(Hasher $hasher, PendingRequest $http, Queue $queue)
@@ -23,13 +25,12 @@ class Dispatcher
         $this->queue = $queue;
     }
 
-
     public function dispatch(string $job, array $payload = [], $queue = 'default'): Result
     {
         $signature = $this->sign($job, $payload);
         $response = $this->http
             ->withHeaders(['Accept' => 'application/json'])
-            ->post(config('dispatcher.url') . '/dispatch', [
+            ->post(config('dispatcher.url').'/dispatch', [
                 'job' => $job,
                 'payload' => $payload,
                 'signature' => $signature,
@@ -45,7 +46,7 @@ class Dispatcher
         return new Result($response['id'], $response);
     }
 
-    public function batch(array $jobs, string $queue = 'default', bool $shouldBatch = true) : Result
+    public function batch(array $jobs, string $queue = 'default', bool $shouldBatch = true): Result
     {
         $jobs = collect($jobs)->filter(fn ($job) => $job instanceof Job);
 
@@ -55,7 +56,7 @@ class Dispatcher
             'batchId' => $batchId,
             'shouldBatch' => $shouldBatch,
             'batchSize' => count($jobs),
-            'createdAt' => now()
+            'createdAt' => now(),
         ];
 
         $signature = $this->sign($batchId, $payload);
@@ -67,10 +68,9 @@ class Dispatcher
             'queue' => $queue ?? 'default',
         ];
 
-
         $response = $this->http
             ->withHeaders(['Accept' => 'application/json'])
-            ->post(config('dispatcher.url') . '/dispatch/batch', $fields);
+            ->post(config('dispatcher.url').'/dispatch/batch', $fields);
 
         if ($response->failed()) {
             return new Result(0, $response->json());
@@ -84,10 +84,11 @@ class Dispatcher
     public function receive(string $job, array $payload = [], string $queue = 'default'): mixed
     {
         $job = $this->makeJob($job, $payload);
+
         return $this->queue->pushOn($queue, $job);
     }
 
-    public function receiveBatch(array $batch, string $queue = 'default', bool $shouldBatch = true) : array
+    public function receiveBatch(array $batch, string $queue = 'default', bool $shouldBatch = true): array
     {
         $jobs = [];
 
@@ -110,7 +111,7 @@ class Dispatcher
 
     protected function makeJob(string $job, array $payload = [])
     {
-        if (config('dispatcher.aliases.'.$job)){
+        if (config('dispatcher.aliases.'.$job)) {
             $job = config('dispatcher.aliases.'.$job);
         }
 
@@ -119,11 +120,11 @@ class Dispatcher
 
     public function verify(string $job, array $payload = [], string $signature = '')
     {
-        return $this->hasher->check($job . json_encode($payload) . config('dispatcher.secret'), $signature);
+        return $this->hasher->check($job.json_encode($payload).config('dispatcher.secret'), $signature);
     }
 
     public function sign(string $job, array $payload = [])
     {
-        return $this->hasher->make($job . json_encode($payload) . config('dispatcher.secret'));
+        return $this->hasher->make($job.json_encode($payload).config('dispatcher.secret'));
     }
 }

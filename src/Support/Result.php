@@ -5,7 +5,9 @@ namespace Assetplan\Dispatcher\Support;
 final class Result
 {
     protected string $id;
+
     protected array $response;
+
     protected bool $ok = true;
 
     public function __construct($id, array $response)

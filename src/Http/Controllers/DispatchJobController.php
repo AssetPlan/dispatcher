@@ -14,7 +14,7 @@ class DispatchJobController
             'job' => ['required', new IsIlluminateJob],
             'payload' => 'required',
             'queue' => 'sometimes',
-            'signature' => 'required'
+            'signature' => 'required',
         ]);
 
         $queue = 'default';

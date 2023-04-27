@@ -13,13 +13,12 @@ class DispatcherServiceProvider extends ServiceProvider
     public function boot()
     {
         if (config('dispatcher.is_backend')) {
-            $this->loadRoutesFrom(__DIR__ . '/routes.php');
+            $this->loadRoutesFrom(__DIR__.'/routes.php');
         }
-
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../config/config.php' => config_path('dispatcher.php'),
+                __DIR__.'/../config/config.php' => config_path('dispatcher.php'),
             ], 'config');
 
             $this->commands([
@@ -33,7 +32,7 @@ class DispatcherServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/config.php', 'dispatcher');
+        $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'dispatcher');
 
         $this->app->singleton('dispatcher', Dispatcher::class);
 

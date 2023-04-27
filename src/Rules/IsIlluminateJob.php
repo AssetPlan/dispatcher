@@ -14,19 +14,19 @@ class IsIlluminateJob implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (config('dispatcher.aliases.'.$value)){
+        if (config('dispatcher.aliases.'.$value)) {
             $value = config('dispatcher.aliases.'.$value);
         }
 
-        if (!class_exists($value)) {
+        if (! class_exists($value)) {
             $fail('Job class does not exist');
         }
 
-        if (!method_exists($value, 'handle')) {
+        if (! method_exists($value, 'handle')) {
             $fail('Job class does not have a handle method');
         }
 
-        if (!is_subclass_of($value, 'Illuminate\Contracts\Queue\ShouldQueue')) {
+        if (! is_subclass_of($value, 'Illuminate\Contracts\Queue\ShouldQueue')) {
             $fail('Job class does not implement Illuminate\Contracts\Queue\ShouldQueue');
         }
     }

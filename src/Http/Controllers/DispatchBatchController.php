@@ -18,7 +18,6 @@ class DispatchBatchController
             'batch.*.name' => ['required', new IsIlluminateJob],
         ]);
 
-
         $queue = 'default';
 
         if ($request->filled('queue')) {

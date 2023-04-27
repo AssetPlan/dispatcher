@@ -10,7 +10,6 @@ use Illuminate\Support\Str;
 
 class GenerateSecretCommand extends Command
 {
-
     const DISPATCHER_BACKEND_SECRET = 'DISPATCHER_BACKEND_SECRET';
 
     /**
@@ -35,6 +34,7 @@ class GenerateSecretCommand extends Command
 
         if (App::environment('production')) {
             $this->warn('You are in production environment. Please do not run this command in production environment.');
+
             return self::FAILURE;
         }
 
@@ -45,9 +45,10 @@ class GenerateSecretCommand extends Command
         ]);
 
         if ($validator->fails()) {
-            foreach( $validator->errors()->get('length') as $error) {
+            foreach ($validator->errors()->get('length') as $error) {
                 $this->error($error);
             }
+
             return self::FAILURE;
         }
 
@@ -56,31 +57,31 @@ class GenerateSecretCommand extends Command
         $this->info('Secret key generated successfully.');
 
         if ($this->option('show')) {
-            $this->info('Secret key: ' . $secretKey);
+            $this->info('Secret key: '.$secretKey);
         }
 
         if ($this->option('no-replace')) {
             return self::SUCCESS;
         }
 
-        if (!file_exists(base_path('.env'))) {
+        if (! file_exists(base_path('.env'))) {
             $this->error('.env file not found.');
+
             return self::FAILURE;
         }
 
-        if ($this->confirm('Do you want to replace the existing ' . self::DISPATCHER_BACKEND_SECRET . ' key in .env file?', true)) {
+        if ($this->confirm('Do you want to replace the existing '.self::DISPATCHER_BACKEND_SECRET.' key in .env file?', true)) {
             // read .env file if it has DISPATCHER_BACKEND_SECRET replace it or add it
             $envFile = File::get(base_path('.env'));
 
             if (strpos($envFile, self::DISPATCHER_BACKEND_SECRET) !== false) {
-                $envFile = preg_replace('/' . self::DISPATCHER_BACKEND_SECRET . '=.*/', self::DISPATCHER_BACKEND_SECRET . '=' . $secretKey, $envFile);
+                $envFile = preg_replace('/'.self::DISPATCHER_BACKEND_SECRET.'=.*/', self::DISPATCHER_BACKEND_SECRET.'='.$secretKey, $envFile);
             } else {
-                $envFile .= "\n" . self::DISPATCHER_BACKEND_SECRET . '=' . $secretKey;
+                $envFile .= "\n".self::DISPATCHER_BACKEND_SECRET.'='.$secretKey;
             }
 
             File::put(base_path('.env'), $envFile);
         }
-
 
         return self::SUCCESS;
     }

@@ -18,5 +18,5 @@ return [
      */
     'aliases' => [
         // 'some-job' => 'App\Jobs\SomeJob',
-    ]
+    ],
 ];

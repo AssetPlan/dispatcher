@@ -4,12 +4,11 @@ use Assetplan\Dispatcher\Tests\TestCase;
 
 class SignatureTest extends TestCase
 {
-
     public function testSignature()
     {
         $payload = [
             'foo' => 'bar',
-            'baz' => 'qux'
+            'baz' => 'qux',
         ];
 
         $dispatcher = app()->make('dispatcher');
@@ -25,7 +24,7 @@ class SignatureTest extends TestCase
     {
         $payload = [
             'foo' => 'bar',
-            'baz' => 'qux'
+            'baz' => 'qux',
         ];
 
         $dispatcher = app()->make('dispatcher');
@@ -43,7 +42,7 @@ class SignatureTest extends TestCase
     {
         $payload = [
             'foo' => 'bar',
-            'baz' => 'qux'
+            'baz' => 'qux',
         ];
 
         $signature = 'not-a-valid-signature';
@@ -53,5 +52,4 @@ class SignatureTest extends TestCase
 
         $this->assertFalse($verified);
     }
-
 }
