@@ -168,7 +168,11 @@ class ExampleController
 
 **Note:** When dispatching with `shouldBatch=false` the batch id will be generated as the local batch UUID.
 
+### Some final considerations
 
+- This package is a lightweight solution for a specific problem.
+- When creating `Jobs` that could be dispatched from another app using `dispatcher`, consider using model IDs or `array` parameters to keep the size of the HTTP payload manageable.
+- If you need to dispatch a large number of jobs, consider chunking them or dispatching a single job that dispatches the batch.
 
 ## Credits
 
