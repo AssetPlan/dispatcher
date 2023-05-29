@@ -38,7 +38,9 @@ class Dispatcher
             ]);
 
         if ($response->failed()) {
-            return new Result(0, $response->json());
+            $response = ($response->json() ?? ['reason' => $response->reason()]);
+
+            return new Result(0, $response);
         }
 
         $response = $response->json();
