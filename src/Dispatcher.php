@@ -122,7 +122,12 @@ class Dispatcher
 
     public function verify(string $job, array $payload = [], string $signature = '')
     {
-        return $this->hasher->check($job.json_encode($payload).config('dispatcher.secret'), $signature);
+        try {
+            return $this->hasher->check($job.json_encode($payload).config('dispatcher.secret'), $signature);
+        } catch (\RuntimeException $e) {
+            // Laravel 11+ throws an exception if the signature is not a valid bcrypt hash
+            return false;
+        }
     }
 
     public function sign(string $job, array $payload = [])
