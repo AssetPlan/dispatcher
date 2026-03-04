@@ -29,6 +29,10 @@ DISPATCHER_BACKEND_SECRET=your-secret
 
 The `DISPATCHER_BACKEND_URL` variable should point to the URL of the backend application. The `DISPATCHER_BACKEND_SECRET` variable is a shared secret that is used to sign the dispatched jobs. Make sure to keep this secret secure.
 
+Dispatcher signs the full request envelope (job, payload, queue, delay and batch data when present). This prevents queue/delay tampering in transit.
+
+For backward compatibility, backend verification still accepts legacy signatures that were generated only with `job + payload`.
+
 ### Generating a secret key
 The `dispatcher:generate-secret` command allows you to generate a secret key that is used to sign the dispatched jobs. You can use this command to generate a new secret key or replace an existing one.
 

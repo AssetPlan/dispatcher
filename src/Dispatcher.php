@@ -33,16 +33,19 @@ class Dispatcher
     {
         $serializedDelay = $this->serializeDelay($delay);
 
-        $signature = $this->sign($job, $payload);
+        $fields = [
+            'job' => $job,
+            'payload' => $payload,
+            'queue' => $queue ?? 'default',
+            'delay' => $serializedDelay,
+        ];
+
+        $signature = $this->signRequest($fields);
         $response = $this->http
             ->withHeaders(['Accept' => 'application/json'])
-            ->post(config('dispatcher.url').'/dispatch', [
-                'job' => $job,
-                'payload' => $payload,
+            ->post(config('dispatcher.url').'/dispatch', array_merge($fields, [
                 'signature' => $signature,
-                'queue' => $queue ?? 'default',
-                'delay' => $serializedDelay,
-            ]);
+            ]));
 
         if ($response->failed()) {
             $response = ($response->json() ?? ['reason' => $response->reason()]);
@@ -75,14 +78,15 @@ class Dispatcher
             'createdAt' => now(),
         ];
 
-        $signature = $this->sign($batchId, $payload);
         $fields = [
             'job' => $batchId,
             'payload' => $payload,
             'batch' => $jobs->all(),
-            'signature' => $signature,
             'queue' => $queue ?? 'default',
         ];
+
+        $signature = $this->signRequest($fields);
+        $fields['signature'] = $signature;
 
         $response = $this->http
             ->withHeaders(['Accept' => 'application/json'])
@@ -170,6 +174,58 @@ class Dispatcher
     public function sign(string $job, array $payload = [])
     {
         return $this->hasher->make($job.json_encode($payload).config('dispatcher.secret'));
+    }
+
+    public function signRequest(array $requestData = []): string
+    {
+        $normalized = $this->normalizeRequestData($requestData);
+
+        return $this->hasher->make(json_encode($normalized).config('dispatcher.secret'));
+    }
+
+    public function verifyRequest(array $requestData = [], string $signature = ''): bool
+    {
+        try {
+            $normalized = $this->normalizeRequestData($requestData);
+
+            if ($this->hasher->check(json_encode($normalized).config('dispatcher.secret'), $signature)) {
+                return true;
+            }
+
+            return $this->verify(
+                $requestData['job'] ?? '',
+                $requestData['payload'] ?? [],
+                $signature,
+            );
+        } catch (\RuntimeException $e) {
+            return false;
+        }
+    }
+
+    protected function normalizeRequestData(array $requestData): array
+    {
+        $data = [
+            'job' => $requestData['job'] ?? null,
+            'payload' => $requestData['payload'] ?? [],
+            'queue' => $requestData['queue'] ?? 'default',
+            'delay' => $requestData['delay'] ?? null,
+            'batch' => $requestData['batch'] ?? null,
+        ];
+
+        return $this->sortArrayRecursively($data);
+    }
+
+    protected function sortArrayRecursively(array $data): array
+    {
+        foreach ($data as $key => $value) {
+            if (is_array($value)) {
+                $data[$key] = $this->sortArrayRecursively($value);
+            }
+        }
+
+        ksort($data);
+
+        return $data;
     }
 
     protected function serializeDelay(int|string|DateTimeInterface|DateInterval|null $delay): int|string|null
