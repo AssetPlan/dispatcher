@@ -98,10 +98,12 @@ You can then use the alias when dispatching the job:
 **Note:** Registering aliases is entirely optional and it only needs to be done in the backend server.
 
 ### Dispatching a job
-To dispatch a job from your application, use the dispatch method of the Dispatcher class. The method takes two parameters:
+To dispatch a job from your application, use the dispatch method of the Dispatcher class. The method takes up to four parameters:
 
 - `$job`: The fully qualified name of the job class to be dispatched.
 - `$payload`: An array of data to be passed to the job.
+- `$queue`: (optional) The queue name where the job should be dispatched.
+- `$delay`: (optional) Delay before dispatching the job. It can be an integer (seconds), a datetime string, or a `DateTimeInterface` / `DateInterval` instance.
 
 Here's an example:
 ```php
@@ -123,13 +125,24 @@ class ExampleController
     }
 }
 ```
+
+Dispatching with delay:
+
+```php
+<?php
+
+$dispatcher->dispatch(MyJob::class, ['foo' => 'bar'], queue: 'emails', delay: 120);
+// or
+$dispatcher->dispatch(MyJob::class, ['foo' => 'bar'], queue: 'emails', delay: now()->addMinutes(5));
+```
+
 The `dispatch` method will return the result of the dispatched job. You can use this result to track the status of the job or to perform further processing.
 
 ### Dispatching a batch of jobs
 
 To dispatch a batch of jobs, use the `batch` method of the `Dispatcher` class. The method takes three parameters:
 
-- `$jobs`: an array of `Assetplan\Dispatcher\Queue\Job` objects: each with the name of the target job and it's payload
+- `$jobs`: an array of `Assetplan\Dispatcher\Queue\Job` objects: each with the name of the target job, its payload and an optional delay.
 - `$queue`: the queue to which the jobs should be dispatched
 - `$shouldBatch`: whether the batch should be dispatched as a Laravel Queue Batch or simply dispatch all the jobs separately
 
@@ -148,7 +161,8 @@ class ExampleController
         $jobs = [
             new Job(
                 SendWelcomeEmail::class,
-                ['email'=>'user@example.com']
+                ['email'=>'user@example.com'],
+                delay: 300,
             ),
             new Job(
                 'App\Jobs\InviteToUserGroup',

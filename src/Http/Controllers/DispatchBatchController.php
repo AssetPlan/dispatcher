@@ -16,6 +16,7 @@ class DispatchBatchController
             'signature' => 'required',
             'payload.shouldBatch' => 'required|boolean',
             'batch.*.name' => ['required', new IsIlluminateJob],
+            'batch.*.delay' => 'sometimes',
         ]);
 
         $queue = 'default';

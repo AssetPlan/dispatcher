@@ -4,11 +4,15 @@ namespace Assetplan\Dispatcher;
 
 use Assetplan\Dispatcher\Queue\Job;
 use Assetplan\Dispatcher\Support\Result;
+use DateInterval;
+use DateTimeInterface;
 use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Contracts\Queue\Queue;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class Dispatcher
 {
@@ -25,8 +29,10 @@ class Dispatcher
         $this->queue = $queue;
     }
 
-    public function dispatch(string $job, array $payload = [], $queue = 'default'): Result
+    public function dispatch(string $job, array $payload = [], $queue = 'default', int|string|DateTimeInterface|DateInterval|null $delay = null): Result
     {
+        $serializedDelay = $this->serializeDelay($delay);
+
         $signature = $this->sign($job, $payload);
         $response = $this->http
             ->withHeaders(['Accept' => 'application/json'])
@@ -35,6 +41,7 @@ class Dispatcher
                 'payload' => $payload,
                 'signature' => $signature,
                 'queue' => $queue ?? 'default',
+                'delay' => $serializedDelay,
             ]);
 
         if ($response->failed()) {
@@ -50,7 +57,14 @@ class Dispatcher
 
     public function batch(array $jobs, string $queue = 'default', bool $shouldBatch = true): Result
     {
-        $jobs = collect($jobs)->filter(fn ($job) => $job instanceof Job);
+        $jobs = collect($jobs)
+            ->filter(fn ($job) => $job instanceof Job)
+            ->map(fn (Job $job) => [
+                'name' => $job->name,
+                'payload' => $job->payload,
+                'delay' => $this->serializeDelay($job->delay),
+            ])
+            ->values();
 
         $batchId = Str::uuid();
 
@@ -65,7 +79,7 @@ class Dispatcher
         $fields = [
             'job' => $batchId,
             'payload' => $payload,
-            'batch' => $jobs,
+            'batch' => $jobs->all(),
             'signature' => $signature,
             'queue' => $queue ?? 'default',
         ];
@@ -83,9 +97,15 @@ class Dispatcher
         return new Result($response['id'], $response);
     }
 
-    public function receive(string $job, array $payload = [], string $queue = 'default'): mixed
+    public function receive(string $job, array $payload = [], string $queue = 'default', int|string|DateTimeInterface|DateInterval|null $delay = null): mixed
     {
         $job = $this->makeJob($job, $payload);
+
+        $normalizedDelay = $this->normalizeDelay($delay);
+
+        if (! is_null($normalizedDelay)) {
+            return $this->queue->laterOn($queue, $normalizedDelay, $job);
+        }
 
         return $this->queue->pushOn($queue, $job);
     }
@@ -96,16 +116,33 @@ class Dispatcher
 
         foreach ($batch as $job) {
             $job = Job::fromJson($job);
-            $jobs[] = $this->makeJob($job->name, $job->payload);
+
+            $resolvedJob = $this->makeJob($job->name, $job->payload);
+            $delay = $this->normalizeDelay($job->delay);
+
+            if (! is_null($delay) && method_exists($resolvedJob, 'delay')) {
+                $resolvedJob->delay($delay);
+            }
+
+            $jobs[] = [
+                'job' => $resolvedJob,
+                'delay' => $delay,
+            ];
         }
+
         if ($shouldBatch) {
-            return Bus::batch($jobs)->onQueue($queue)->dispatch()->jsonSerialize();
+            return Bus::batch(array_map(fn (array $job) => $job['job'], $jobs))->onQueue($queue)->dispatch()->jsonSerialize();
         }
 
         $results = [];
 
         foreach ($jobs as $job) {
-            $results[] = ['id' => $this->queue->pushOn($queue, $job)];
+            if (! is_null($job['delay'])) {
+                $results[] = ['id' => $this->queue->laterOn($queue, $job['delay'], $job['job'])];
+                continue;
+            }
+
+            $results[] = ['id' => $this->queue->pushOn($queue, $job['job'])];
         }
 
         return $results;
@@ -133,5 +170,59 @@ class Dispatcher
     public function sign(string $job, array $payload = [])
     {
         return $this->hasher->make($job.json_encode($payload).config('dispatcher.secret'));
+    }
+
+    protected function serializeDelay(int|string|DateTimeInterface|DateInterval|null $delay): int|string|null
+    {
+        if (is_null($delay)) {
+            return null;
+        }
+
+        if ($delay instanceof DateInterval) {
+            return now()->add($delay)->toIso8601String();
+        }
+
+        if ($delay instanceof DateTimeInterface) {
+            return Carbon::instance($delay)->toIso8601String();
+        }
+
+        if (is_string($delay) && is_numeric($delay)) {
+            return (int) $delay;
+        }
+
+        return $delay;
+    }
+
+    protected function normalizeDelay(int|string|DateTimeInterface|DateInterval|null $delay): int|DateTimeInterface|null
+    {
+        if (is_null($delay)) {
+            return null;
+        }
+
+        if ($delay instanceof DateInterval) {
+            return now()->add($delay);
+        }
+
+        if ($delay instanceof DateTimeInterface) {
+            return $delay;
+        }
+
+        if (is_string($delay) && trim($delay) === '') {
+            return null;
+        }
+
+        if (is_string($delay) && is_numeric($delay)) {
+            return (int) $delay;
+        }
+
+        if (is_string($delay)) {
+            return Carbon::parse($delay);
+        }
+
+        if (is_int($delay)) {
+            return $delay;
+        }
+
+        throw new InvalidArgumentException('Invalid delay value.');
     }
 }
