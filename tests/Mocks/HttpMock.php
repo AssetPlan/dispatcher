@@ -6,6 +6,12 @@ use Illuminate\Http\Client\PendingRequest;
 
 class HttpMock extends PendingRequest
 {
+    public array $lastPostData = [];
+
+    public array $response = ['id' => 'mock-id'];
+
+    public bool $shouldFail = false;
+
     public function withHeaders(array $headers)
     {
         return $this;
@@ -13,17 +19,18 @@ class HttpMock extends PendingRequest
 
     public function post(string $url, $data = [])
     {
-        // return new Response([]);
+        $this->lastPostData = $data;
+
         return $this;
     }
 
     public function json()
     {
-        return [];
+        return $this->response;
     }
 
     public function failed($shouldFail = false)
     {
-        return ! $shouldFail;
+        return $shouldFail || $this->shouldFail;
     }
 }

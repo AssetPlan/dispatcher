@@ -10,9 +10,9 @@ use Illuminate\Hashing\BcryptHasher;
 
 class ResultTest extends TestCase
 {
-    public function testDispatchShouldReturnResult()
+    public function test_dispatch_should_return_result()
     {
-        $http = new HttpMock();
+        $http = new HttpMock;
 
         // Config::shouldReceive('get')->with('dispatcher.url')->andReturn('https://example.com');
         $dispatcher = new Dispatcher(new BcryptHasher, $http, app(Queue::class));
