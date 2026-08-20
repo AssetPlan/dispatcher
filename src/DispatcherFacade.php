@@ -2,10 +2,11 @@
 
 namespace Assetplan\Dispatcher;
 
+use Assetplan\Dispatcher\Skeleton\SkeletonClass;
 use Illuminate\Support\Facades\Facade;
 
 /**
- * @see \Assetplan\Dispatcher\Skeleton\SkeletonClass
+ * @see SkeletonClass
  */
 class DispatcherFacade extends Facade
 {
