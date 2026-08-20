@@ -34,6 +34,22 @@ class DispatcherContractTest extends TestCase
         $this->assertFalse($dispatcher->verifyRequest($request, $signature));
     }
 
+    public function test_request_signature_rejects_changed_batch_entry(): void
+    {
+        $dispatcher = app()->make('dispatcher');
+        $request = [
+            'job' => 'batch-id',
+            'payload' => ['shouldBatch' => false],
+            'queue' => 'default',
+            'delay' => null,
+            'batch' => [['name' => 'job', 'payload' => ['id' => 1], 'queue' => 'emails', 'delay' => 30]],
+        ];
+        $signature = $dispatcher->signRequest($request);
+        $request['batch'][0]['queue'] = 'critical';
+
+        $this->assertFalse($dispatcher->verifyRequest($request, $signature));
+    }
+
     public function test_legacy_signature_cannot_authorize_new_controls(): void
     {
         $dispatcher = app()->make('dispatcher');

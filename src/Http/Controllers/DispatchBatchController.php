@@ -18,7 +18,7 @@ class DispatchBatchController
             'payload.shouldBatch' => 'required|boolean',
             'batch.*.name' => ['required', new IsIlluminateJob],
             'batch.*.payload' => 'required|array',
-            'batch.*.queue' => 'nullable|string',
+            'batch.*.queue' => 'nullable|string|min:1',
             'batch.*.delay' => ['nullable', function (string $attribute, mixed $value, \Closure $fail) {
                 if (! Dispatcher::isValidWireDelay($value)) {
                     $fail('The '.$attribute.' must be non-negative integer seconds or an ISO 8601 date.');
