@@ -5,6 +5,7 @@ namespace Assetplan\Dispatcher\Http\Controllers;
 use Assetplan\Dispatcher\Dispatcher;
 use Assetplan\Dispatcher\Rules\IsIlluminateJob;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class DispatchBatchController
 {
@@ -12,20 +13,32 @@ class DispatchBatchController
     {
         $request->validate([
             'batch' => 'required|array',
-            'queue' => 'sometimes',
-            'signature' => 'required',
+            'queue' => 'sometimes|required|string',
+            'signature' => 'required|string',
             'payload.shouldBatch' => 'required|boolean',
             'batch.*.name' => ['required', new IsIlluminateJob],
+            'batch.*.payload' => 'required|array',
+            'batch.*.queue' => 'nullable|string|min:1',
+            'batch.*.delay' => ['nullable', function (string $attribute, mixed $value, \Closure $fail) {
+                if (! Dispatcher::isValidWireDelay($value)) {
+                    $fail('The '.$attribute.' must be non-negative integer seconds or an ISO 8601 date.');
+                }
+            }],
         ]);
 
-        $queue = 'default';
-
-        if ($request->filled('queue')) {
-            $queue = $request->input('queue');
+        $queue = $request->input('queue', 'default');
+        if ($request->input('payload.shouldBatch') && collect($request->input('batch'))->contains(
+            fn (array $job) => isset($job['queue']) && $job['queue'] !== $queue
+        )) {
+            throw ValidationException::withMessages([
+                'batch' => 'All jobs in a Laravel batch must use the batch queue.',
+            ]);
         }
 
-        $results = $dispatcher->receiveBatch($request->batch, $queue, $request->payload['shouldBatch']);
-
-        return response()->json($results);
+        return response()->json($dispatcher->receiveBatch(
+            $request->input('batch'),
+            $queue,
+            $request->boolean('payload.shouldBatch'),
+        ));
     }
 }

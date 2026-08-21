@@ -4,7 +4,7 @@ use Assetplan\Dispatcher\Tests\TestCase;
 
 class SignatureTest extends TestCase
 {
-    public function testSignature()
+    public function test_signature()
     {
         $payload = [
             'foo' => 'bar',
@@ -20,7 +20,7 @@ class SignatureTest extends TestCase
         $this->assertTrue($verified);
     }
 
-    public function testSignatureWithDifferentPayload()
+    public function test_signature_with_different_payload()
     {
         $payload = [
             'foo' => 'bar',
@@ -38,7 +38,7 @@ class SignatureTest extends TestCase
         $this->assertFalse($verified);
     }
 
-    public function testSignatureWithDifferentSignature()
+    public function test_signature_with_different_signature()
     {
         $payload = [
             'foo' => 'bar',

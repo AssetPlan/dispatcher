@@ -29,6 +29,8 @@ DISPATCHER_BACKEND_SECRET=your-secret
 
 The `DISPATCHER_BACKEND_URL` variable should point to the URL of the backend application. The `DISPATCHER_BACKEND_SECRET` variable is a shared secret that is used to sign the dispatched jobs. Make sure to keep this secret secure.
 
+Dispatcher signs the complete request envelope: job, payload, queue, delay, and batch entries. This prevents queue or delay values from being changed in transit. Backends continue to accept legacy `job + payload` signatures only for requests with no new controls.
+
 ### Generating a secret key
 The `dispatcher:generate-secret` command allows you to generate a secret key that is used to sign the dispatched jobs. You can use this command to generate a new secret key or replace an existing one.
 
@@ -98,10 +100,12 @@ You can then use the alias when dispatching the job:
 **Note:** Registering aliases is entirely optional and it only needs to be done in the backend server.
 
 ### Dispatching a job
-To dispatch a job from your application, use the dispatch method of the Dispatcher class. The method takes two parameters:
+To dispatch a job from your application, use the dispatch method of the Dispatcher class. The method accepts these parameters:
 
 - `$job`: The fully qualified name of the job class to be dispatched.
 - `$payload`: An array of data to be passed to the job.
+- `$queue`: The optional queue name. It defaults to `default`.
+- `$delay`: An optional delay. Use non-negative integer seconds, a `DateInterval`, or a `DateTimeInterface` value.
 
 Here's an example:
 ```php
@@ -123,14 +127,27 @@ class ExampleController
     }
 }
 ```
+For example, to send a job to the `emails` queue after five minutes:
+
+```php
+$dispatcher->dispatch(
+    MyJob::class,
+    ['foo' => 'bar'],
+    queue: 'emails',
+    delay: new \DateInterval('PT5M'),
+);
+```
+
+Relative delays are sent as seconds and start when the backend receives the request. Absolute `DateTimeInterface` values are sent as ISO 8601 dates.
+
 The `dispatch` method will return the result of the dispatched job. You can use this result to track the status of the job or to perform further processing.
 
 ### Dispatching a batch of jobs
 
 To dispatch a batch of jobs, use the `batch` method of the `Dispatcher` class. The method takes three parameters:
 
-- `$jobs`: an array of `Assetplan\Dispatcher\Queue\Job` objects: each with the name of the target job and it's payload
-- `$queue`: the queue to which the jobs should be dispatched
+- `$jobs`: an array of `Assetplan\Dispatcher\Queue\Job` objects. Each object has a target job name and payload. It can also have an optional queue and delay.
+- `$queue`: the default queue to which jobs should be dispatched
 - `$shouldBatch`: whether the batch should be dispatched as a Laravel Queue Batch or simply dispatch all the jobs separately
 
 Here's an example:
@@ -148,7 +165,9 @@ class ExampleController
         $jobs = [
             new Job(
                 SendWelcomeEmail::class,
-                ['email'=>'user@example.com']
+                ['email'=>'user@example.com'],
+                queue: 'emails',
+                delay: 300,
             ),
             new Job(
                 'App\Jobs\InviteToUserGroup',
@@ -165,6 +184,8 @@ class ExampleController
 }
 
 ```
+
+When `shouldBatch=false`, each job can use its own queue and delay. When `shouldBatch=true`, Laravel requires all jobs in the batch to use the batch queue. Per-job queue overrides must therefore match the `$queue` argument. Per-job delays are still supported.
 
 **Note:** When dispatching with `shouldBatch=false` the batch id will be generated as the local batch UUID.
 

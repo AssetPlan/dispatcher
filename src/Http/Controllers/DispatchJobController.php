@@ -12,17 +12,21 @@ class DispatchJobController
     {
         $request->validate([
             'job' => ['required', new IsIlluminateJob],
-            'payload' => 'required',
-            'queue' => 'sometimes',
-            'signature' => 'required',
+            'payload' => 'required|array',
+            'queue' => 'sometimes|required|string',
+            'delay' => ['nullable', function (string $attribute, mixed $value, \Closure $fail) {
+                if (! Dispatcher::isValidWireDelay($value)) {
+                    $fail('The '.$attribute.' must be non-negative integer seconds or an ISO 8601 date.');
+                }
+            }],
+            'signature' => 'required|string',
         ]);
 
-        $queue = 'default';
-
-        if ($request->filled('queue')) {
-            $queue = $request->input('queue');
-        }
-
-        return response()->json(['id' => $dispatcher->receive($request->job, $request->payload, $queue)]);
+        return response()->json(['id' => $dispatcher->receive(
+            $request->input('job'),
+            $request->input('payload'),
+            $request->input('queue', 'default'),
+            $request->input('delay'),
+        )]);
     }
 }

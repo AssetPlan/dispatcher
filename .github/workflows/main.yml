@@ -13,23 +13,29 @@ jobs:
             fail-fast: true
             matrix:
                 os: [ubuntu-latest]
-                php: [8.1, 8.2]
-                laravel: [10.*, 11.*]
-                stability: [prefer-lowest, prefer-stable]
-                exclude:
-                    - php: 8.1
-                      laravel: 11.*
                 include:
-                    - laravel: 10.*
-                      testbench: ^8.0
-                    - laravel: 11.*
-                      testbench: ^9.0
+                    - php: 8.4
+                      laravel: 12.*
+                      testbench: ^10.0
+                      stability: prefer-lowest
+                    - php: 8.4
+                      laravel: 12.*
+                      testbench: ^10.0
+                      stability: prefer-stable
+                    - php: 8.4
+                      laravel: 13.*
+                      testbench: ^11.0
+                      stability: prefer-lowest
+                    - php: 8.4
+                      laravel: 13.*
+                      testbench: ^11.0
+                      stability: prefer-stable
 
         name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
         steps:
             - name: Checkout code
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
 
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
@@ -45,6 +51,9 @@ jobs:
             - name: Install dependencies
               run: |
                   composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
-                  composer update --${{ matrix.stability }} --prefer-dist --no-interaction
+                  # This is a Laravel compatibility matrix. It intentionally resolves
+                  # historical framework releases that Composer marks as insecure.
+                  # Dependency security is tracked separately from this test matrix.
+                  composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-blocking
             - name: Execute tests
               run: vendor/bin/phpunit
